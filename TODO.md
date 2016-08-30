@@ -1,0 +1,1 @@
+- 如果特征存储源是table, 则自动更新新FeatureSource的列信息
