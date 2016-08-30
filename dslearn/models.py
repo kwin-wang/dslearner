@@ -5,36 +5,35 @@ from sqlalchemy.orm import relationship
 
 from . import db
 
-"""
 
-You can use the extra Flask-AppBuilder fields and Mixin's
-
-AuditMixin will add automatic timestamp of created and modified by who
-
-
-"""
-
-
-class FeatureTables(Model, AuditMixin):
-    __tablename__ = 'feature_tables'
-
+class FeatureSourceType(Model, AuditMixin):
+    __tablename__ = 'feature_source_type'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
-    features = relationship('Features', backref='feature_tables', lazy='dynamic')
+    username = Column(String)
+    password = Column(String)
+    uri = Column(String)
+    feature_source = relationship('FeatureSource', backref='feature_source_type', lazy='dynamic')
+
+    def test_connection(self):
+        pass
 
     def __repr__(self):
         return self.name
 
 
-registrations = db.Table('registrations',
-                         Column('id', Integer, primary_key=True),
-                         Column('features_id', Integer, ForeignKey('features.id')),
-                         Column('mlmodels_id', Integer, ForeignKey('mlmodels.id')))
-#
-# class Registrations(Model):
-#     __tablename__ = 'registrations'
-#     Column('features_id', Integer, ForeignKey('features.id'))
-#     Column('model_id', Integer, ForeignKey('mlmodels.id'))
+class FeatureSource(Model, AuditMixin):
+    __tablename__ = 'feature_source'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    feature_source_type_id = Column(Integer, ForeignKey('feature_source_type.id'), nullable=False)
+    features = relationship('Features', backref='feature_source', lazy='dynamic')
+
+
+    def __repr__(self):
+        return self.name
+
 
 class MlModels(Model, AuditMixin):
     __tablename__ = 'mlmodels'
@@ -51,7 +50,7 @@ class Features(Model, AuditMixin):
     __tablename__ = 'features'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    feature_tables_id = Column(String, ForeignKey('feature_tables.id'), nullable=False)
+    feature_source_id = Column(String, ForeignKey('feature_source.id'), nullable=False)
     filed_name = Column(String, default=name)
     feature_type = Column(String, nullable=False)
     statistical_caliber = Column(String)
@@ -74,9 +73,3 @@ class FeatureTypes(Model, AuditMixin):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
     describe = Column(String)
-
-
-
-
-
-
