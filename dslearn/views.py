@@ -5,6 +5,14 @@ from flask.ext.appbuilder import ModelView
 from . import appbuilder, db
 from . import models
 
+
+class FeatureTypesModelView(ModelView):
+    datamodel = SQLAInterface(models.FeatureTypes)
+    exclude_cols = ['changed_by', 'changed_on', 'created_by', 'created_on']
+    add_exclude_columns = exclude_cols
+    edit_columns = exclude_cols
+
+
 class FeaturesModelView(ModelView):
     datamodel = SQLAInterface(models.Features)
     search_columns = ["name", "filed_name"]
@@ -17,14 +25,19 @@ class FeaturesModelView(ModelView):
     add_exclude_columns = exclude_cols
 
 
-
 class FeatureSourceModelView(ModelView):
     datamodel = SQLAInterface(models.FeatureSource)
     list_columns = ['name', 'feature_source_type']
     edit_columns = ["name"]
     add_columns = ["name", 'feature_source_type']
     related_views = [FeaturesModelView]
-    
+
+    def post_add(self, table):
+        pass
+
+    def post_update(self, table):
+        self.post_add(table)
+
 
 class FeatureSourceTypeModelView(ModelView):
     datamodel = SQLAInterface(models.FeatureSourceType)
@@ -39,14 +52,21 @@ class FeatureSourceTypeModelView(ModelView):
 class MachineLearningModelView(ModelView):
     datamodel = SQLAInterface(models.MlModels)
     search_columns = ['name']
+    exclude_cols = ['changed_by', 'changed_on', 'created_by', 'created_on']
+    add_exclude_columns = exclude_cols
+    edit_exclude_columns = exclude_cols
 
 
 @appbuilder.app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html', base_template=appbuilder.base_template, appbuilder=appbuilder), 404
 
+
 db.create_all()
-appbuilder.add_view(FeatureSourceTypeModelView, 'List Feature Source Type', category="Feature Manager")
+
+appbuilder.add_view(FeatureSourceTypeModelView, 'List Feature Source Types', category="Feature Manager")
+appbuilder.add_view(FeatureTypesModelView, 'List Feature Types', category='Feature Manager')
 appbuilder.add_view(FeaturesModelView, 'List Features', category='Feature Manager')
 appbuilder.add_view(FeatureSourceModelView, 'List Feature Source', category='Feature Manager')
+
 appbuilder.add_view(MachineLearningModelView, 'List Models', category="Model Manager")
