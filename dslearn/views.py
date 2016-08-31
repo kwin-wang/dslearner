@@ -1,9 +1,11 @@
 # -*- coding: utf-8
+import logging
 from flask import render_template
 from flask.ext.appbuilder.models.sqla.interface import SQLAInterface
-from flask.ext.appbuilder import ModelView
+from flask.ext.appbuilder import ModelView, CompactCRUDMixin
 from . import appbuilder, db
 from . import models
+from . import utils as utils
 
 
 class FeatureTypesModelView(ModelView):
@@ -17,12 +19,28 @@ class FeaturesModelView(ModelView):
     datamodel = SQLAInterface(models.Features)
     search_columns = ["name", "filed_name"]
     exclude_cols = ['changed_by', 'changed_on', 'created_by', 'created_on']
-    columns = ['name', 'filed_name', 'feature_type', 'statistical_caliber', 'method_update', 'is_valid']
+    columns = ['name', 'filed_name', 'feature_type', 'statistical_caliber',
+           'method_update', 'is_valid']
+
+    edit_cols = ['name', 'feature_types', 'feature_source', 'filed_name', 'statistical_caliber',
+       'method_update', 'is_valid', 'is_model_register']
     list_columns = columns
     # edit_columns = columns
     # add_columns = columns
-    edit_exclude_columns = exclude_cols
-    add_exclude_columns = exclude_cols
+    edit_columns = edit_cols
+    add_columns = edit_cols
+
+
+class TableColumnsModelView(ModelView, CompactCRUDMixin):
+    can_delete = False
+    datamodel = SQLAInterface(models.TableColumns)
+    add_columns = ['column_name', 'type', 'is_feature', 'is_dttm','description']
+    edit_form = add_columns
+    list_columns = add_columns
+    show_columns = add_columns
+    name = 'hello'
+
+appbuilder.add_view_no_menu(TableColumnsModelView)
 
 
 class FeatureSourceModelView(ModelView):
@@ -30,13 +48,20 @@ class FeatureSourceModelView(ModelView):
     list_columns = ['name', 'feature_source_type']
     edit_columns = ["name"]
     add_columns = ["name", 'feature_source_type']
-    related_views = [FeaturesModelView]
+    related_views = [FeaturesModelView, TableColumnsModelView]
 
     def post_add(self, table):
-        pass
+        try:
+            table.fetch_table_metadata()
+        except Exception as e:
+            logging.exception(e)
+            utils.flasher('Table not exists!')
 
     def post_update(self, table):
         self.post_add(table)
+
+
+
 
 
 class FeatureSourceTypeModelView(ModelView):
